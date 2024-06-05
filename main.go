@@ -2,22 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
+	"os"
+	"strings"
 )
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reqDump, err := httputil.DumpRequestOut(r, true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("REQUEST (CLIENT):\n%s", string(reqDump))
-		next.ServeHTTP(w, r)
-	})
-}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
@@ -26,14 +15,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// Setup groupcache
-	registerGroup()
-	peers := getPeers()
+	registerGroup("sentinel-cogs.s3.amazonaws.com")
+	peersConfig := os.Getenv("peers")
+	peers := strings.Split(peersConfig, ",")
+	pool := registerPeers(peers)
 
 	mux := http.NewServeMux()
-	finalHandler := http.HandlerFunc(handler)
-	mux.Handle("/", loggingMiddleware(finalHandler))
-	mux.Handle("/_groupcache/", newPool(peers))
-	log.Print("starting server on :4000")
+	mux.Handle("/", http.HandlerFunc(handler))
+	mux.Handle("/_groupcache/", pool)
+	log.Println(peers)
+	log.Println("starting server on :4000")
 
 	err := http.ListenAndServe(":4000", mux)
 	log.Fatal(err)

@@ -7,6 +7,8 @@ services:
     platform: linux/amd64
     ports:
       - "8080:4000"
+    environment:
+      peers: http://proxy1:4000,http://proxy2:4000,http://proxy3:4000
   proxy2:
     build:
       context: .
@@ -14,6 +16,8 @@ services:
     hostname: proxy2
     ports:
       - "8081:4000"
+    environment:
+      peers: http://proxy2:4000,http://proxy1:4000,http://proxy3:4000
   proxy3:
     build:
       context: .
@@ -21,3 +25,12 @@ services:
     hostname: proxy3
     ports:
       - "8082:4000"
+    environment:
+      peers: http://proxy3:4000http://proxy1:4000,http://proxy2:4000
+  nginx:
+    image: nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    

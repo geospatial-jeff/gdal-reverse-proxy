@@ -9,14 +9,14 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"os"
+	"net/url"
+	"strings"
 	"github.com/golang/groupcache"
 )
 
 func getCacheKey(r *http.Request) string {
 	return r.Method + r.URL.String()
 }
-
 
 func copyHeader(dst, src http.Header) {
 	for k, vv := range src {
@@ -28,10 +28,29 @@ func copyHeader(dst, src http.Header) {
 
 var group *groupcache.Group
 
-func registerGroup() {
-	// 3MB group
+func registerGroup(hostName string) {
 	group = groupcache.NewGroup("group", 3000000, groupcache.GetterFunc(func(ctx context.Context, key string, sink groupcache.Sink) error {
-		originalRequest := ctx.Value("originalRequest").(*http.Request)
+		fmt.Println("Starting GetterFunc.")
+		fmt.Println(key)
+		decodedKey := strings.Replace(key, "|", "\n", -1)
+		reader := bufio.NewReader(strings.NewReader(decodedKey))
+
+
+		originalRequest, err := http.ReadRequest(reader)
+		if err != nil {
+			panic(err)
+		}
+
+		rawURL := "http://" + hostName
+		if originalRequest.URL.Path != "" {
+			rawURL = rawURL + originalRequest.URL.Path
+		}
+		fullUrl, err := url.Parse(rawURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		originalRequest.URL = fullUrl
+		originalRequest.Host = hostName
 
 		proxy := &httputil.ReverseProxy{
 			Rewrite: func(r *httputil.ProxyRequest) {},
@@ -51,44 +70,32 @@ func registerGroup() {
 		}
 
 		sink.SetBytes(buf.Bytes())
-		fmt.Print("INSIDE GETTER FUNC")
 		return nil
 	}))
 }
 
-func getPeers() []string {
-	me, err := os.Hostname()
-	if err != nil {
-		panic("Get Hostname: " + err.Error())
-	}
-
-	me = fmt.Sprintf("http://%s:4000", me)
-
-	peers := []string{
-		"http://proxy1:4000",
-		"http://proxy2:4000",
-		"http://proxy3:4000",
-	}
-
-	for i, v := range peers {
-		if v == me {
-			peers = append(peers[:i], peers[i+1:]...)
-		}
-	}
-
-	return append([]string{me}, peers...)
-}
-
-func newPool(peers []string) *groupcache.HTTPPool {
+func registerPeers(peers []string) *groupcache.HTTPPool {
 	pool := groupcache.NewHTTPPoolOpts(peers[0], nil)
 	pool.Set(peers...)
 
 	return pool
 }
 
+
 func lookup(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	ctx = context.WithValue(ctx, "originalRequest", r)
-	cacheKey := getCacheKey(r)
+	// ctx = context.WithValue(ctx, "originalRequest", r)
+
+	// var inbuf bytes.Buffer
+	// if err := r.Write(&inbuf); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	var b = &bytes.Buffer{}
+	if err := r.Write(b); err != nil {
+		log.Fatal(err)
+	}
+
+	cacheKey := strings.Replace(b.String(), "\n", "|", -1)
 	var data []byte
 	if err := group.Get(ctx, cacheKey, groupcache.AllocatingByteSliceSink(&data)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

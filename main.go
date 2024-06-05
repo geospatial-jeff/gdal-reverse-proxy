@@ -8,7 +8,7 @@ import (
 	"net/http/httputil"
 )
 
-func middlewareOne(next http.Handler) http.Handler {
+func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqDump, err := httputil.DumpRequestOut(r, true)
 		if err != nil {
@@ -30,7 +30,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	finalHandler := http.HandlerFunc(handler)
-	mux.Handle("/", middlewareOne(finalHandler))
+	mux.Handle("/", loggingMiddleware(finalHandler))
 	log.Print("starting server on :4000")
 
 	err := http.ListenAndServe(":4000", mux)

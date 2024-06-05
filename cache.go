@@ -14,9 +14,16 @@ import (
 )
 
 func getCacheKey(r *http.Request) string {
-	var key bytes.Buffer
-	key.WriteString(r.Method + r.URL.String())
-	return key.String()
+	return r.Method + r.URL.String()
+}
+
+
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
+	}
 }
 
 var group *groupcache.Group

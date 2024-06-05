@@ -27,10 +27,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Setup groupcache
 	registerGroup()
+	peers := getPeers()
 
 	mux := http.NewServeMux()
 	finalHandler := http.HandlerFunc(handler)
 	mux.Handle("/", loggingMiddleware(finalHandler))
+	mux.Handle("/_groupcache/", newPool(peers))
 	log.Print("starting server on :4000")
 
 	err := http.ListenAndServe(":4000", mux)

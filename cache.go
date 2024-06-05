@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-
+	"os"
 	"github.com/golang/groupcache"
 )
 
@@ -54,6 +54,36 @@ func registerGroup() {
 		fmt.Print("INSIDE GETTER FUNC")
 		return nil
 	}))
+}
+
+func getPeers() []string {
+	me, err := os.Hostname()
+	if err != nil {
+		panic("Get Hostname: " + err.Error())
+	}
+
+	me = fmt.Sprintf("http://%s:4000", me)
+
+	peers := []string{
+		"http://proxy1:4000",
+		"http://proxy2:4000",
+		"http://proxy3:4000",
+	}
+
+	for i, v := range peers {
+		if v == me {
+			peers = append(peers[:i], peers[i+1:]...)
+		}
+	}
+
+	return append([]string{me}, peers...)
+}
+
+func newPool(peers []string) *groupcache.HTTPPool {
+	pool := groupcache.NewHTTPPoolOpts(peers[0], nil)
+	pool.Set(peers...)
+
+	return pool
 }
 
 func lookup(ctx context.Context, w http.ResponseWriter, r *http.Request) {

@@ -3,6 +3,7 @@ services:
   proxy1:
     build:
       context: .
+    hostname: proxy1
     platform: linux/amd64
     ports:
       - "8080:4000"
@@ -10,11 +11,13 @@ services:
     build:
       context: .
     platform: linux/amd64
+    hostname: proxy2
     ports:
       - "8081:4000"
   proxy3:
     build:
       context: .
     platform: linux/amd64
+    hostname: proxy3
     ports:
       - "8082:4000"

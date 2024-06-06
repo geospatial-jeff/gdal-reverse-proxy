@@ -62,8 +62,8 @@ func newPool(peers []string) *groupcache.HTTPPool {
 
 var group *groupcache.Group
 
-func newGroup(hostName string) {
-	group = groupcache.NewGroup("requests", 3<<20, groupcache.GetterFunc(
+func newGroup(hostName string, cacheSizeBytes int64) {
+	group = groupcache.NewGroup("requests", cacheSizeBytes, groupcache.GetterFunc(
 		func(_ context.Context, key string, sink groupcache.Sink) error {
 			me, err := os.Hostname()
 			if err != nil {
@@ -114,8 +114,13 @@ func newGroup(hostName string) {
 func main() {
 	config := viper.New()
 	config.AutomaticEnv()
+
+	// Default to 50mb cache
+	config.SetDefault("GROUPCACHE_SIZE_BYTES", 50000000)
+
 	proxyHostname := config.GetString("PROXY_HOSTNAME")
 	cachePeers := config.GetString("GROUPCACHE_PEERS")
+	cacheSizeBytes := config.GetInt64("GROUPCACHE_SIZE_BYTES")
 	if proxyHostname == "" {
 		log.Fatal("Missing required env variable PROXY_HOSTNAME")
 	}
@@ -123,8 +128,10 @@ func main() {
 		log.Fatal("Missing required env variable GROUPCACHE_PEERS")
 	}
 
+
+
 	// Setup groupcache
-	newGroup(proxyHostname)
+	newGroup(proxyHostname, cacheSizeBytes)
 	peersList := strings.Split(cachePeers, ",")
 	
 

@@ -15,6 +15,7 @@ import (
 )
 
 
+
 func copyHeader(dst, src http.Header) {
 	for k, vv := range src {
 		for _, v := range vv {
@@ -40,7 +41,10 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	// Serialize bytes into http response
 	buf := bytes.NewBuffer(data)
 	reader := bufio.NewReader(buf)
-	res, _ := http.ReadResponse(reader, r)
+	res, err := http.ReadResponse(reader, r)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	copyHeader(w.Header(), res.Header)
 	w.WriteHeader(res.StatusCode)
@@ -62,7 +66,7 @@ func newGroup(hostName string) {
 		func(_ context.Context, key string, sink groupcache.Sink) error {
 			me, err := os.Hostname()
 			if err != nil {
-				panic("Get Hostname: " + err.Error())
+				log.Panic(err)
 			}
 	
 			log.Printf("Request handled by %s", me)
@@ -71,7 +75,7 @@ func newGroup(hostName string) {
 			reader := bufio.NewReader(strings.NewReader(key))
 			originalRequest, err := http.ReadRequest(reader)
 			if err != nil {
-				panic(err)
+				log.Panic(err)
 			}
 	
 			// We can't have this set on client requests
@@ -83,7 +87,7 @@ func newGroup(hostName string) {
 			}
 			fullUrl, err := url.Parse(rawURL)
 			if err != nil {
-				log.Fatal(err)
+				log.Panic(err)
 			}
 			originalRequest.URL = fullUrl
 			originalRequest.Host = hostName
@@ -91,13 +95,13 @@ func newGroup(hostName string) {
 			client := http.Client{}
 			res, err := client.Do(originalRequest)
 			if err != nil {
-				panic(err)
+				log.Panic(err)
 			}
 	
 			// Write HTTP response out to bytes, store in cache
 			var outBuf bytes.Buffer
 			if err := res.Write(&outBuf); err != nil {
-				log.Fatal(err)
+				log.Panic(err)
 			}
 			sink.SetBytes(outBuf.Bytes(), time.Time{})
 			return nil

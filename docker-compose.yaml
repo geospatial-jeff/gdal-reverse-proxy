@@ -7,6 +7,8 @@ services:
     platform: linux/amd64
     ports:
       - "8080:8080"
+    environment:
+      PROXY_HOSTNAME: "sentinel-cogs.s3.amazonaws.com"
   app2:
     build:
       context: .
@@ -14,6 +16,8 @@ services:
     hostname: app2
     ports:
       - "8081:8080"
+    environment:
+      PROXY_HOSTNAME: "sentinel-cogs.s3.amazonaws.com"
   app3:
     build:
       context: .
@@ -21,6 +25,8 @@ services:
     hostname: app3
     ports:
       - "8082:8080"
+    environment:
+      PROXY_HOSTNAME: "sentinel-cogs.s3.amazonaws.com"
   nginx:
     image: nginx
     ports:

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -106,34 +105,15 @@ func newGroup(hostName string) {
 	))	
 }
 
-func getPeers() []string {
-	me, err := os.Hostname()
-	if err != nil {
-		panic("Get Hostname: " + err.Error())
-	}
-
-	me = fmt.Sprintf("http://%s:8080", me)
-
-	peers := []string{
-		"http://app1:8080",
-		"http://app2:8080",
-		"http://app3:8080",
-	}
-
-	for i, v := range peers {
-		if v == me {
-			peers = append(peers[:i], peers[i+1:]...)
-		}
-	}
-
-	return append([]string{me}, peers...)
-}
 
 func main() {
 	proxyHostname := os.Getenv("PROXY_HOSTNAME")
-	newGroup(proxyHostname)
+	peersConfig := os.Getenv("GROUPCACHE_PEERS")
 
-	peers := getPeers()
+	// Setup groupcache
+	newGroup(proxyHostname)
+	peers := strings.Split(peersConfig, ",")
+	
 
 	log.Printf("listening on %v", peers[0])
 	log.Printf("peers: %v", peers)

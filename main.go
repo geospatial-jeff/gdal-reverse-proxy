@@ -12,6 +12,7 @@ import (
 	"time"
 	"io"
 	"github.com/mailgun/groupcache/v2"
+	"github.com/spf13/viper"
 )
 
 
@@ -111,19 +112,27 @@ func newGroup(hostName string) {
 
 
 func main() {
-	proxyHostname := os.Getenv("PROXY_HOSTNAME")
-	peersConfig := os.Getenv("GROUPCACHE_PEERS")
+	config := viper.New()
+	config.AutomaticEnv()
+	proxyHostname := config.GetString("PROXY_HOSTNAME")
+	cachePeers := config.GetString("GROUPCACHE_PEERS")
+	if proxyHostname == "" {
+		log.Fatal("Missing required env variable PROXY_HOSTNAME")
+	}
+	if cachePeers == "" {
+		log.Fatal("Missing required env variable GROUPCACHE_PEERS")
+	}
 
 	// Setup groupcache
 	newGroup(proxyHostname)
-	peers := strings.Split(peersConfig, ",")
+	peersList := strings.Split(cachePeers, ",")
 	
 
-	log.Printf("listening on %v", peers[0])
-	log.Printf("peers: %v", peers)
+	log.Printf("listening on %v", peersList[0])
+	log.Printf("peers: %v", peersList)
 
 	http.HandleFunc("/", http.HandlerFunc(proxyHandler))
-	http.Handle("/_groupcache/", newPool(peers))
+	http.Handle("/_groupcache/", newPool(peersList))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

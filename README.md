@@ -2,7 +2,7 @@
 
 A HTTP reverse-proxy which provides a distributed caching layer for GDAL-based applications with remote data access, ideal for cloud optimized data formats (ex. COG) which are commonly accessed via HTTP range requests.  This project uses [groupcache](https://github.com/golang/groupcache) for distributed cache filling across potentially multiple peers.  This simplifies the deployment of the cache and lets us support large cache sizes by scaling peers horizontally across potentially multiple underlying nodes.
 
-![concept-diagramn](./assets/concept-diagramn.png)
+![concept-diagram](./assets/concept-diagram.png)
 
 ## Usage
 Deploy the proxy with three peers and an NGINX server (`:8000`) load balancing across the peers.

@@ -14,14 +14,14 @@ services:
       # https://github.com/tiangolo/uvicorn-gunicorn-docker#workers_per_core
       WORKERS_PER_CORE: 1
       # GDAL config
-      # CPL_TMPDIR: /tmp
-      # GDAL_CACHEMAX: 75%
-      # GDAL_INGESTED_BYTES_AT_OPEN: 32768
-      # GDAL_DISABLE_READDIR_ON_OPEN: FALSE
-      # GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: YES
-      # PYTHONWARNINGS: ignore
-      # VSI_CACHE: TRUE
-      # VSI_CACHE_SIZE: 536870912
+      CPL_TMPDIR: /tmp
+      GDAL_CACHEMAX: 75%
+      GDAL_INGESTED_BYTES_AT_OPEN: 32768
+      GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
+      GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: YES
+      PYTHONWARNINGS: ignore
+      VSI_CACHE: TRUE
+      VSI_CACHE_SIZE: 536870912
   nginx:
       image: nginx:latest
       volumes:

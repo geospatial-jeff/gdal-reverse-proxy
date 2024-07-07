@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  titiler:
+    hostname: titiler
+    image: developmentseed/titiler
+    ports:
+      - 5000
+    environment:
+      PORT: 5000
+      # Gunicorn / Uvicorn
+      # https://github.com/tiangolo/uvicorn-gunicorn-docker#web_concurrency
+      WEB_CONCURRENCY: 1
+      # https://github.com/tiangolo/uvicorn-gunicorn-docker#workers_per_core
+      WORKERS_PER_CORE: 1
+      # GDAL config
+      CPL_TMPDIR: /tmp
+      GDAL_CACHEMAX: 75%
+      GDAL_INGESTED_BYTES_AT_OPEN: 32768
+      GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
+      GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: YES
+      PYTHONWARNINGS: ignore
+      VSI_CACHE: TRUE
+      VSI_CACHE_SIZE: 536870912
+  nginx:
+      image: nginx:latest
+      volumes:
+        - ./nginx/default.conf:/etc/nginx/nginx.conf:ro
+      depends_on:
+        - titiler
+      ports:
+        - "4000:4000"
